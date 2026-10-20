@@ -1,0 +1,424 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated pharmacy account settings, active role mode, and retention policy.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user."
+        },
+        "pharmacyName": {
+          "type": "string",
+          "description": "Name of the pharmacy workspace."
+        },
+        "activeRole": {
+          "type": "string",
+          "enum": ["ADMIN", "COUNTER_STAFF"],
+          "description": "Currently active role mode in the app."
+        },
+        "retentionDays": {
+          "type": "integer",
+          "description": "Configured retention period in days for prescription images and records."
+        },
+        "aiEndpoint": {
+          "type": "string",
+          "description": "Configured AI vision endpoint URL (non-secret)."
+        },
+        "aiModelName": {
+          "type": "string",
+          "description": "Configured AI vision model identifier."
+        },
+        "aiAuthMethod": {
+          "type": "string",
+          "enum": ["BEARER_HEADER", "X_API_KEY_HEADER", "QUERY_PARAM_KEY"],
+          "description": "Authentication method used by the configured AI API."
+        },
+        "aiRequestFormat": {
+          "type": "string",
+          "enum": ["OPENAI_VISION", "GEMINI_REST", "GENERIC_JSON_VISION"],
+          "description": "Request payload structure used by the configured AI API."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "email",
+        "displayName",
+        "pharmacyName",
+        "activeRole",
+        "retentionDays",
+        "aiEndpoint",
+        "aiModelName",
+        "aiAuthMethod",
+        "aiRequestFormat",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PrescriptionRequest": {
+      "title": "PrescriptionRequest",
+      "description": "Uploaded prescription request with extracted fields, review status, and counter claim lock.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID for pharmacy isolation."
+        },
+        "requestCode": {
+          "type": "string",
+          "description": "Human-readable unique prescription request code (e.g. RX-2026-1001)."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "ANALYZING",
+            "NEEDS_REVIEW",
+            "APPROVED",
+            "REJECTED",
+            "IMPORTED",
+            "COMPLETED"
+          ],
+          "description": "Explicit workflow state of the prescription."
+        },
+        "submittedByRole": {
+          "type": "string",
+          "enum": ["ADMIN", "COUNTER_STAFF"],
+          "description": "Role that uploaded the prescription."
+        },
+        "submittedByName": {
+          "type": "string",
+          "description": "Name of staff member or admin who submitted the request."
+        },
+        "patientName": {
+          "type": "string",
+          "description": "Patient name (or Needs Review / Unspecified)."
+        },
+        "patientAge": {
+          "type": "string",
+          "description": "Patient age if legible."
+        },
+        "patientContact": {
+          "type": "string",
+          "description": "Optional patient contact number entered at counter."
+        },
+        "staffNotes": {
+          "type": "string",
+          "description": "Notes from counter staff."
+        },
+        "doctorName": {
+          "type": "string",
+          "description": "Doctor name extracted or verified."
+        },
+        "prescriptionDate": {
+          "type": "string",
+          "description": "Date written on the prescription."
+        },
+        "imageLocalPath": {
+          "type": "string",
+          "description": "Private app storage path to the prescription image."
+        },
+        "imageBase64Preview": {
+          "type": "string",
+          "description": "Compact private base64 JPEG preview for side-by-side admin review."
+        },
+        "items": {
+          "type": "array",
+          "description": "Bounded list (max 25) of extracted and matched prescription medicine line items."
+        },
+        "needsReviewCount": {
+          "type": "integer",
+          "description": "Number of fields or medicine items flagged as Needs Review."
+        },
+        "reviewedBy": {
+          "type": "string",
+          "description": "Admin/pharmacist who reviewed the request."
+        },
+        "reviewNotes": {
+          "type": "string",
+          "description": "Verification or rejection notes from the admin."
+        },
+        "readyForCounterSale": {
+          "type": "boolean",
+          "description": "True when approved and marked Ready for Counter Sale."
+        },
+        "claimedByCounterId": {
+          "type": "string",
+          "description": "Counter terminal ID currently holding a recoverable claim lock."
+        },
+        "claimToken": {
+          "type": "string",
+          "description": "Idempotency claim token preventing duplicate counter imports."
+        },
+        "claimExpiresAtEpochMs": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the current counter claim lock expires."
+        },
+        "importedAtEpochMs": {
+          "type": "integer",
+          "description": "Epoch milliseconds when the desktop counter sale import completed."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "requestCode",
+        "status",
+        "submittedByRole",
+        "submittedByName",
+        "patientName",
+        "patientAge",
+        "patientContact",
+        "staffNotes",
+        "doctorName",
+        "prescriptionDate",
+        "imageLocalPath",
+        "imageBase64Preview",
+        "items",
+        "needsReviewCount",
+        "reviewedBy",
+        "reviewNotes",
+        "readyForCounterSale",
+        "claimedByCounterId",
+        "claimToken",
+        "claimExpiresAtEpochMs",
+        "importedAtEpochMs",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MedicineCatalogItem": {
+      "title": "MedicineCatalogItem",
+      "description": "Verified medicine item from the pharmacy Item Master CSV.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "itemCode": {
+          "type": "string",
+          "description": "Unique item code from the pharmacy Item Master."
+        },
+        "itemName": {
+          "type": "string",
+          "description": "Verified item trade name."
+        },
+        "genericName": {
+          "type": "string",
+          "description": "Generic/composition name."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Dispensing unit (e.g. Tablet, Capsule, Strip, Bottle)."
+        },
+        "packSize": {
+          "type": "string",
+          "description": "Pack size specification (e.g. 10x10, 15 Tabs, 100ml)."
+        },
+        "mrp": {
+          "type": "number",
+          "description": "Verified Maximum Retail Price from CSV."
+        },
+        "gstPercent": {
+          "type": "number",
+          "description": "Verified GST tax rate percentage from CSV."
+        },
+        "hsnCode": {
+          "type": "string",
+          "description": "HSN tax code from CSV."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of update."
+        }
+      },
+      "required": [
+        "userId",
+        "itemCode",
+        "itemName",
+        "genericName",
+        "unit",
+        "packSize",
+        "mrp",
+        "gstPercent",
+        "hsnCode",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StaffAccount": {
+      "title": "StaffAccount",
+      "description": "Pharmacy counter staff or admin operator profile managed by the admin.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "staffName": {
+          "type": "string",
+          "description": "Operator full name."
+        },
+        "staffEmail": {
+          "type": "string",
+          "description": "Operator email or identifier."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["ADMIN", "COUNTER_STAFF"],
+          "description": "Assigned role."
+        },
+        "counterTerminalId": {
+          "type": "string",
+          "description": "Assigned counter terminal ID (e.g. COUNTER-1)."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the operator account is active."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of update."
+        }
+      },
+      "required": [
+        "userId",
+        "staffName",
+        "staffEmail",
+        "role",
+        "counterTerminalId",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AuditLogEntry": {
+      "title": "AuditLogEntry",
+      "description": "Immutable audit trail entry for prescription creation, analysis, approval, rejection, export, and import events.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "prescriptionId": {
+          "type": "string",
+          "description": "Associated prescription document ID."
+        },
+        "requestCode": {
+          "type": "string",
+          "description": "Human-readable prescription request code."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "CREATED",
+            "UPLOADED",
+            "ANALYZED",
+            "NEEDS_REVIEW",
+            "APPROVED",
+            "REJECTED",
+            "READY_FOR_COUNTER",
+            "CLAIMED",
+            "EXPORTED_JSON",
+            "IMPORTED",
+            "RETENTION_PURGED",
+            "DELETED"
+          ],
+          "description": "Audit event type."
+        },
+        "actorName": {
+          "type": "string",
+          "description": "Name of the user who triggered the event."
+        },
+        "actorRole": {
+          "type": "string",
+          "enum": ["ADMIN", "COUNTER_STAFF"],
+          "description": "Role of the actor."
+        },
+        "details": {
+          "type": "string",
+          "description": "Summary of the event."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the event was recorded."
+        }
+      },
+      "required": [
+        "userId",
+        "prescriptionId",
+        "requestCode",
+        "action",
+        "actorName",
+        "actorRole",
+        "details",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Pharmacy workspace profile and settings keyed by authenticated user UID."
+    },
+    "/prescriptions/{prescriptionId}": {
+      "schema": { "$ref": "#/entities/PrescriptionRequest" },
+      "description": "Prescription requests scoped to userId."
+    },
+    "/catalog_items/{itemId}": {
+      "schema": { "$ref": "#/entities/MedicineCatalogItem" },
+      "description": "Imported pharmacy Item Master medicines scoped to userId."
+    },
+    "/staff_accounts/{staffId}": {
+      "schema": { "$ref": "#/entities/StaffAccount" },
+      "description": "Managed counter staff and admin profiles scoped to userId."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLogEntry" },
+      "description": "Append-only audit trail entries scoped to userId."
+    }
+  }
+}

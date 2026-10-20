@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp"
+    android:height="140dp"
+    android:viewportWidth="320"
+    android:viewportHeight="140">
+    <path android:pathData="M0,0h320v140h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="320"
+                android:endY="140"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0F172A" />
+                <item android:offset="0.55" android:color="#134E4A" />
+                <item android:offset="1.0" android:color="#0D9488" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Decorative subtle grid / circles -->
+    <path
+        android:fillColor="#1A99F6E4"
+        android:pathData="M260,30m-55,0a55,55 0,1 1,110 0a55,55 0,1 1,-110 0" />
+    <path
+        android:fillColor="#1A99F6E4"
+        android:pathData="M290,110m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
+    <!-- Prescription Card Graphic -->
+    <path
+        android:fillColor="#26FFFFFF"
+        android:pathData="M210,22h82c4.4,0 8,3.6 8,8v80c0,4.4 -3.6,8 -8,8h-82c-4.4,0 -8,-3.6 -8,-8v-80c0,-4.4 3.6,-8 8,-8z" />
+    <!-- Medical Cross Badge -->
+    <path
+        android:fillColor="#5EEAD4"
+        android:pathData="M226,36h8v-6h6v6h8v6h-8v6h-6v-6h-8z" />
+    <!-- Lines representing extracted Rx fields -->
+    <path
+        android:fillColor="#CCFFFFFF"
+        android:pathData="M220,60h62v5h-62z" />
+    <path
+        android:fillColor="#99FFFFFF"
+        android:pathData="M220,72h48v5h-48z" />
+    <path
+        android:fillColor="#99FFFFFF"
+        android:pathData="M220,84h54v5h-54z" />
+    <!-- Verified Shield Check -->
+    <path
+        android:fillColor="#2DD4BF"
+        android:pathData="M276,94m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M273.5,98.5l-4,-4l1.8,-1.8l2.2,2.2l5.2,-5.2l1.8,1.8z" />
+</vector>

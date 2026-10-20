@@ -1,0 +1,291 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        ('email' in request.auth.token && 'email_verified' in request.auth.token &&
+         request.auth.token.email == 'nileshthokale0@gmail.com' && request.auth.token.email_verified == true)
+      );
+    }
+
+    // 3. Entity Validation Helpers (Pillar 2: Anti-Update-Gap)
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.email is string && data.email.size() <= 200 &&
+             data.displayName is string && data.displayName.size() <= 120 &&
+             data.pharmacyName is string && data.pharmacyName.size() >= 1 && data.pharmacyName.size() <= 150 &&
+             data.activeRole in ['ADMIN', 'COUNTER_STAFF'] &&
+             data.retentionDays is int && data.retentionDays >= 1 && data.retentionDays <= 3650 &&
+             data.aiEndpoint is string && data.aiEndpoint.size() <= 500 &&
+             data.aiModelName is string && data.aiModelName.size() <= 120 &&
+             data.aiAuthMethod in ['BEARER_HEADER', 'X_API_KEY_HEADER', 'QUERY_PARAM_KEY'] &&
+             data.aiRequestFormat in ['OPENAI_VISION', 'GEMINI_REST', 'GENERIC_JSON_VISION'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPrescriptionRequest(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.requestCode is string && data.requestCode.size() >= 3 && data.requestCode.size() <= 40 &&
+             data.status in ['PENDING', 'ANALYZING', 'NEEDS_REVIEW', 'APPROVED', 'REJECTED', 'IMPORTED', 'COMPLETED'] &&
+             data.submittedByRole in ['ADMIN', 'COUNTER_STAFF'] &&
+             data.submittedByName is string && data.submittedByName.size() >= 1 && data.submittedByName.size() <= 120 &&
+             data.patientName is string && data.patientName.size() <= 150 &&
+             data.patientAge is string && data.patientAge.size() <= 40 &&
+             data.patientContact is string && data.patientContact.size() <= 50 &&
+             data.staffNotes is string && data.staffNotes.size() <= 1000 &&
+             data.doctorName is string && data.doctorName.size() <= 150 &&
+             data.prescriptionDate is string && data.prescriptionDate.size() <= 50 &&
+             data.imageLocalPath is string && data.imageLocalPath.size() <= 500 &&
+             data.imageBase64Preview is string && data.imageBase64Preview.size() <= 150000 &&
+             data.items is list && data.items.size() <= 25 && (data.items.size() == 0 || data.items[0] is map) &&
+             data.needsReviewCount is int && data.needsReviewCount >= 0 && data.needsReviewCount <= 100 &&
+             data.reviewedBy is string && data.reviewedBy.size() <= 120 &&
+             data.reviewNotes is string && data.reviewNotes.size() <= 1000 &&
+             data.readyForCounterSale is bool &&
+             data.claimedByCounterId is string && data.claimedByCounterId.size() <= 80 &&
+             data.claimToken is string && data.claimToken.size() <= 128 &&
+             data.claimExpiresAtEpochMs is int && data.claimExpiresAtEpochMs >= 0 &&
+             data.importedAtEpochMs is int && data.importedAtEpochMs >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMedicineCatalogItem(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.itemCode is string && data.itemCode.size() >= 1 && data.itemCode.size() <= 64 &&
+             data.itemName is string && data.itemName.size() >= 1 && data.itemName.size() <= 200 &&
+             data.genericName is string && data.genericName.size() <= 200 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 60 &&
+             data.packSize is string && data.packSize.size() <= 60 &&
+             (data.mrp is int || data.mrp is float) && data.mrp >= 0 && data.mrp <= 1000000 &&
+             (data.gstPercent is int || data.gstPercent is float) && data.gstPercent >= 0 && data.gstPercent <= 100 &&
+             data.hsnCode is string && data.hsnCode.size() <= 40 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidStaffAccount(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.staffName is string && data.staffName.size() >= 1 && data.staffName.size() <= 120 &&
+             data.staffEmail is string && data.staffEmail.size() <= 200 &&
+             data.role in ['ADMIN', 'COUNTER_STAFF'] &&
+             data.counterTerminalId is string && data.counterTerminalId.size() <= 60 &&
+             data.isActive is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAuditLogEntry(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.prescriptionId is string && data.prescriptionId.size() <= 128 &&
+             data.requestCode is string && data.requestCode.size() <= 40 &&
+             data.action in [
+               'CREATED',
+               'UPLOADED',
+               'ANALYZED',
+               'NEEDS_REVIEW',
+               'APPROVED',
+               'REJECTED',
+               'READY_FOR_COUNTER',
+               'CLAIMED',
+               'EXPORTED_JSON',
+               'IMPORTED',
+               'RETENTION_PURGED',
+               'DELETED'
+             ] &&
+             data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 120 &&
+             data.actorRole in ['ADMIN', 'COUNTER_STAFF'] &&
+             data.details is string && data.details.size() <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    // 4. Collection Rules
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'email', 'displayName', 'pharmacyName', 'activeRole',
+                         'retentionDays', 'aiEndpoint', 'aiModelName', 'aiAuthMethod',
+                         'aiRequestFormat', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'email', 'displayName', 'pharmacyName', 'activeRole',
+                         'retentionDays', 'aiEndpoint', 'aiModelName', 'aiAuthMethod',
+                         'aiRequestFormat', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'email', 'displayName', 'pharmacyName', 'activeRole',
+                         'retentionDays', 'aiEndpoint', 'aiModelName', 'aiAuthMethod',
+                         'aiRequestFormat', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    match /prescriptions/{prescriptionId} {
+      allow get: if isSignedIn() && isValidId(prescriptionId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(prescriptionId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'requestCode', 'status', 'submittedByRole', 'submittedByName',
+                         'patientName', 'patientAge', 'patientContact', 'staffNotes',
+                         'doctorName', 'prescriptionDate', 'imageLocalPath', 'imageBase64Preview',
+                         'items', 'needsReviewCount', 'reviewedBy', 'reviewNotes',
+                         'readyForCounterSale', 'claimedByCounterId', 'claimToken',
+                         'claimExpiresAtEpochMs', 'importedAtEpochMs', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'requestCode', 'status', 'submittedByRole', 'submittedByName',
+                         'patientName', 'patientAge', 'patientContact', 'staffNotes',
+                         'doctorName', 'prescriptionDate', 'imageLocalPath', 'imageBase64Preview',
+                         'items', 'needsReviewCount', 'reviewedBy', 'reviewNotes',
+                         'readyForCounterSale', 'claimedByCounterId', 'claimToken',
+                         'claimExpiresAtEpochMs', 'importedAtEpochMs', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidPrescriptionRequest(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(prescriptionId) &&
+                       isValidPrescriptionRequest(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().requestCode == existing().requestCode &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         isAdmin() ||
+                         (
+                           existing().status != 'COMPLETED' &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'status', 'patientName', 'patientAge', 'patientContact', 'staffNotes',
+                             'doctorName', 'prescriptionDate', 'imageLocalPath', 'imageBase64Preview',
+                             'items', 'needsReviewCount', 'reviewedBy', 'reviewNotes',
+                             'readyForCounterSale', 'claimedByCounterId', 'claimToken',
+                             'claimExpiresAtEpochMs', 'importedAtEpochMs', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isSignedIn() && isValidId(prescriptionId) && existing().userId == request.auth.uid;
+    }
+
+    match /catalog_items/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(itemId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'itemCode', 'itemName', 'genericName', 'unit',
+                         'packSize', 'mrp', 'gstPercent', 'hsnCode', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'itemCode', 'itemName', 'genericName', 'unit',
+                         'packSize', 'mrp', 'gstPercent', 'hsnCode', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidMedicineCatalogItem(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(itemId) &&
+                       isValidMedicineCatalogItem(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'itemCode', 'itemName', 'genericName', 'unit',
+                         'packSize', 'mrp', 'gstPercent', 'hsnCode', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(itemId) && existing().userId == request.auth.uid;
+    }
+
+    match /staff_accounts/{staffId} {
+      allow get: if isSignedIn() && isValidId(staffId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(staffId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'staffName', 'staffEmail', 'role',
+                         'counterTerminalId', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'staffName', 'staffEmail', 'role',
+                         'counterTerminalId', 'isActive', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidStaffAccount(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(staffId) &&
+                       isValidStaffAccount(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'staffName', 'staffEmail', 'role', 'counterTerminalId', 'isActive', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(staffId) && existing().userId == request.auth.uid;
+    }
+
+    match /audit_logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(logId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'prescriptionId', 'requestCode', 'action',
+                         'actorName', 'actorRole', 'details', 'createdAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'prescriptionId', 'requestCode', 'action',
+                         'actorName', 'actorRole', 'details', 'createdAt'
+                       ]) &&
+                       isValidAuditLogEntry(incoming());
+
+      // Append-only audit log: updates are forbidden
+      allow update: if false;
+      allow delete: if isSignedIn() && isValidId(logId) && existing().userId == request.auth.uid;
+    }
+  }
+}

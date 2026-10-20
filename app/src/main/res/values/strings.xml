@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Pharmacy Prescription Bridge</string>
+    <string name="app_tagline">Prescription Verification, Item Master Matching &amp; Counter Sale Bridge</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="desktop_not_connected">Desktop Not Connected</string>
+    <string name="desktop_bridge_notice">Standalone Bridge Mode: PySide6/SQLite Counter Sale connector is not actively connected. Approved prescriptions are queued with recoverable claim locks and structured JSON export.</string>
+    <string name="ai_setup_required_title">AI Provider Configuration Required</string>
+    <string name="ai_setup_required_body">No AI API key or endpoint is configured. Configure AI_API_KEY in the AI Studio Secrets panel (.env) and set your endpoint/model in Settings before running automated prescription extraction. You can still manually transcribe and review fields.</string>
+    <string name="ready_for_counter_sale">Ready for Counter Sale</string>
+    <string name="needs_review_badge">Needs Review</string>
+    <string name="analyze_prescription">Analyze Prescription</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_incoming">Incoming</string>
+    <string name="nav_review">Review</string>
+    <string name="nav_catalogue">Catalogue</string>
+    <string name="nav_approved">Approved</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+  "name": "Pharmacy Prescription Bridge",
+  "description": "AI-powered prescription verification, medicine catalogue matching, and counter sale export bridge for pharmacies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
