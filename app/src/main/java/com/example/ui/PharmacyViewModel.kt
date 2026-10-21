@@ -39,13 +39,14 @@ sealed interface UiState<out T> {
 }
 
 enum class BridgeScreen(val title: String) {
-    DASHBOARD("Dashboard"),
-    INCOMING("Incoming"),
+    DASHBOARD("Home"),
+    INCOMING("Queue"),
     REVIEW("Review"),
-    CATALOGUE("Catalogue"),
-    APPROVED("Approved"),
+    CATALOGUE("Items"),
+    APPROVED("Ready for Counter Sale"),
     HISTORY("History"),
-    SETTINGS("Settings")
+    SETTINGS("Settings"),
+    MORE("More")
 }
 
 class PharmacyViewModel(
@@ -123,6 +124,8 @@ class PharmacyViewModel(
     private val _currentScreen = MutableStateFlow(BridgeScreen.DASHBOARD)
     val currentScreen: StateFlow<BridgeScreen> = _currentScreen.asStateFlow()
 
+    private val _previousScreen = MutableStateFlow<BridgeScreen?>(null)
+
     private val _selectedPrescriptionId = MutableStateFlow<String?>(null)
     val selectedPrescriptionId: StateFlow<String?> = _selectedPrescriptionId.asStateFlow()
 
@@ -148,11 +151,31 @@ class PharmacyViewModel(
         if (prescriptionId != null) {
             _selectedPrescriptionId.value = prescriptionId
         }
+        _previousScreen.value = _currentScreen.value
         _currentScreen.value = screen
+    }
+
+    fun navigateBack() {
+        val current = _currentScreen.value
+        val previous = _previousScreen.value
+        if (current in setOf(
+                BridgeScreen.APPROVED,
+                BridgeScreen.CATALOGUE,
+                BridgeScreen.HISTORY,
+                BridgeScreen.SETTINGS
+            ) && previous == BridgeScreen.MORE
+        ) {
+            _previousScreen.value = BridgeScreen.DASHBOARD
+            _currentScreen.value = BridgeScreen.MORE
+        } else {
+            _previousScreen.value = null
+            _currentScreen.value = BridgeScreen.DASHBOARD
+        }
     }
 
     fun selectPrescriptionForReview(prescriptionId: String) {
         _selectedPrescriptionId.value = prescriptionId
+        _previousScreen.value = _currentScreen.value
         _currentScreen.value = BridgeScreen.REVIEW
     }
 
@@ -188,8 +211,14 @@ class PharmacyViewModel(
             ).onSuccess {
                 _bannerMessage.value = "Switched active role to ${newRole.label}"
                 if (newRole == UserRole.COUNTER_STAFF &&
-                    _currentScreen.value in setOf(BridgeScreen.REVIEW, BridgeScreen.CATALOGUE, BridgeScreen.SETTINGS)
+                    _currentScreen.value in setOf(
+                        BridgeScreen.REVIEW,
+                        BridgeScreen.CATALOGUE,
+                        BridgeScreen.SETTINGS,
+                        BridgeScreen.MORE
+                    )
                 ) {
+                    _previousScreen.value = null
                     _currentScreen.value = BridgeScreen.INCOMING
                 }
             }.onFailure {

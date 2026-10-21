@@ -293,17 +293,13 @@ fun ApprovedPrescriptionsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.height(4.dp))
-            DesktopBridgeStatusBanner()
-        }
-
-        item {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Approved & Counter Sale Bridge",
+                text = "Ready for Counter Sale",
                 style = MaterialTheme.typography.headlineMedium
             )
             Text(
-                text = "Approved prescriptions display 'Ready for Counter Sale' with recoverable claim locks and documented JSON export for your Python/PySide6 desktop app.",
+                text = "Approved prescriptions ready for the counter. Claim a prescription for your counter terminal or export JSON for the desktop Counter Sale screen.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

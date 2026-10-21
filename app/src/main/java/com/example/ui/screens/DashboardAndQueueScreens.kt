@@ -112,7 +112,8 @@ fun DashboardScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .testTag("dashboard_list"),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -121,15 +122,23 @@ fun DashboardScreen(
         }
 
         item {
-            // Hero Banner Card
+            val nextActionText = when {
+                activeRole == UserRole.ADMIN && (pendingCount + reviewCount) > 0 ->
+                    "Next step: ${pendingCount + reviewCount} prescription(s) waiting for pharmacist review."
+                approvedCount > 0 ->
+                    "Next step: $approvedCount approved prescription(s) ready for counter sale."
+                else ->
+                    "Next step: Upload a prescription photo to start a new counter request."
+            }
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -138,12 +147,13 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = pharmacyName,
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Active Mode: ${activeRole.label}",
+                                text = "Role: ${activeRole.label}",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -167,19 +177,16 @@ fun DashboardScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_pharmacy_hero),
-                        contentDescription = "Pharmacy workflow overview",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(110.dp)
-                            .clip(RoundedCornerShape(14.dp)),
-                        contentScale = ContentScale.Crop
+                    Text(
+                        text = nextActionText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -197,7 +204,7 @@ fun DashboardScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Upload Prescription")
+                            Text("Upload Photo")
                         }
                         if (activeRole == UserRole.ADMIN) {
                             OutlinedButton(
@@ -208,8 +215,58 @@ fun DashboardScreen(
                             ) {
                                 Text("Review Queue (${pendingCount + reviewCount})")
                             }
+                        } else if (approvedCount > 0) {
+                            OutlinedButton(
+                                onClick = { onNavigate(BridgeScreen.APPROVED) },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("dashboard_ready_button")
+                            ) {
+                                Text("Open Ready ($approvedCount)")
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        // How the app works (4 simple numbered steps)
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("how_the_app_works_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "How the app works",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "1. Upload a prescription photo.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "2. Pharmacist reviews and approves the medicine details.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "3. Counter staff opens the approved prescription.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "4. Verify local stock and batches in the desktop application, then complete the sale using the existing desktop workflow.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
         }

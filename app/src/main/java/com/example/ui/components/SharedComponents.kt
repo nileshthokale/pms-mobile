@@ -159,7 +159,7 @@ fun DesktopBridgeStatusBanner(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "PySide6 / SQLite Counter Sale connector is offline. JSON API & claim locks ready.",
+                        text = "Automatic synchronization is not active. Export approved prescriptions as JSON to import them at the counter.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.DarkMode
@@ -27,6 +30,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.RateReview
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
@@ -53,6 +57,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -77,6 +82,7 @@ import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.HistoryScreen
 import com.example.ui.screens.IncomingPrescriptionsScreen
 import com.example.ui.screens.MedicineCatalogueScreen
+import com.example.ui.screens.MoreScreen
 import com.example.ui.screens.PrescriptionReviewScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.UploadPrescriptionDialog
@@ -166,34 +172,66 @@ fun AuthenticatedPharmacyApp(
 
     if (currentScreen != BridgeScreen.DASHBOARD) {
         BackHandler {
-            viewModel.navigateTo(BridgeScreen.DASHBOARD)
+            viewModel.navigateBack()
         }
     }
 
-    val navItems = remember(activeRole) {
+    val mobileBottomItems = remember(activeRole) {
         if (activeRole == UserRole.ADMIN) {
             listOf(
-                NavDestination(BridgeScreen.DASHBOARD, "Dashboard", Icons.Default.Dashboard),
-                NavDestination(BridgeScreen.INCOMING, "Incoming", Icons.Default.Inbox),
+                NavDestination(BridgeScreen.DASHBOARD, "Home", Icons.Default.Dashboard),
+                NavDestination(BridgeScreen.INCOMING, "Queue", Icons.Default.Inbox),
                 NavDestination(BridgeScreen.REVIEW, "Review", Icons.Default.RateReview),
-                NavDestination(BridgeScreen.CATALOGUE, "Catalogue", Icons.Default.Inventory2),
-                NavDestination(BridgeScreen.APPROVED, "Approved", Icons.Default.AssignmentTurnedIn),
-                NavDestination(BridgeScreen.HISTORY, "History", Icons.Default.History),
-                NavDestination(BridgeScreen.SETTINGS, "Settings", Icons.Default.Settings)
+                NavDestination(BridgeScreen.MORE, "More", Icons.Default.MoreHoriz)
             )
         } else {
             listOf(
-                NavDestination(BridgeScreen.DASHBOARD, "Dashboard", Icons.Default.Dashboard),
+                NavDestination(BridgeScreen.DASHBOARD, "Home", Icons.Default.Dashboard),
                 NavDestination(BridgeScreen.INCOMING, "Queue", Icons.Default.Inbox),
-                NavDestination(BridgeScreen.APPROVED, "Approved", Icons.Default.AssignmentTurnedIn),
+                NavDestination(BridgeScreen.APPROVED, "Ready", Icons.Default.AssignmentTurnedIn),
                 NavDestination(BridgeScreen.HISTORY, "History", Icons.Default.History)
             )
         }
     }
 
+    val railItems = remember(activeRole) {
+        if (activeRole == UserRole.ADMIN) {
+            listOf(
+                NavDestination(BridgeScreen.DASHBOARD, "Home", Icons.Default.Dashboard),
+                NavDestination(BridgeScreen.INCOMING, "Queue", Icons.Default.Inbox),
+                NavDestination(BridgeScreen.REVIEW, "Review", Icons.Default.RateReview),
+                NavDestination(BridgeScreen.APPROVED, "Ready", Icons.Default.AssignmentTurnedIn),
+                NavDestination(BridgeScreen.CATALOGUE, "Items", Icons.Default.Inventory2),
+                NavDestination(BridgeScreen.HISTORY, "History", Icons.Default.History),
+                NavDestination(BridgeScreen.SETTINGS, "Settings", Icons.Default.Settings)
+            )
+        } else {
+            mobileBottomItems
+        }
+    }
+
+    val adminSecondaryScreens = remember {
+        setOf(
+            BridgeScreen.APPROVED,
+            BridgeScreen.CATALOGUE,
+            BridgeScreen.HISTORY,
+            BridgeScreen.SETTINGS
+        )
+    }
+
     val pendingReviewBadgeCount = remember(prescriptions) {
         prescriptions.count {
             it.statusEnum() in setOf(PrescriptionStatus.PENDING, PrescriptionStatus.NEEDS_REVIEW)
+        }
+    }
+
+    val approvedReadyCount = remember(prescriptions) {
+        prescriptions.count {
+            it.statusEnum() in setOf(
+                PrescriptionStatus.APPROVED,
+                PrescriptionStatus.IMPORTED,
+                PrescriptionStatus.COMPLETED
+            )
         }
     }
 
@@ -204,26 +242,53 @@ fun AuthenticatedPharmacyApp(
     PharmacyBridgeTheme(darkTheme = isDark) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val useNavigationRail = maxWidth >= 680.dp
+            val showBackInTopBar = !useNavigationRail &&
+                activeRole == UserRole.ADMIN &&
+                currentScreen in adminSecondaryScreens
 
             Scaffold(
                 contentWindowInsets = WindowInsets.safeDrawing,
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 topBar = {
                     TopAppBar(
+                        navigationIcon = {
+                            if (showBackInTopBar) {
+                                IconButton(
+                                    onClick = { viewModel.navigateBack() },
+                                    modifier = Modifier.testTag("top_bar_back_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back to More"
+                                    )
+                                }
+                            }
+                        },
                         title = {
-                            Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Text(
-                                    text = "Pharmacy Prescription Bridge",
+                                    text = if (showBackInTopBar) currentScreen.title else "Pharmacy Bridge",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                Text(
-                                    text = "${activeRole.label} • Desktop Not Connected",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.testTag("header_role_badge")
+                                ) {
+                                    Text(
+                                        text = if (activeRole == UserRole.ADMIN) "Pharmacist" else "Counter Staff",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        maxLines = 1
+                                    )
+                                }
                             }
                         },
                         actions = {
@@ -254,21 +319,11 @@ fun AuthenticatedPharmacyApp(
                 bottomBar = {
                     if (!useNavigationRail) {
                         NavigationBar {
-                            val bottomItems = if (navItems.size > 5) {
-                                listOf(
-                                    NavDestination(BridgeScreen.DASHBOARD, "Home", Icons.Default.Dashboard),
-                                    NavDestination(BridgeScreen.INCOMING, "Incoming", Icons.Default.Inbox),
-                                    NavDestination(BridgeScreen.REVIEW, "Review", Icons.Default.RateReview),
-                                    NavDestination(BridgeScreen.CATALOGUE, "Items", Icons.Default.Inventory2),
-                                    NavDestination(BridgeScreen.APPROVED, "Ready", Icons.Default.AssignmentTurnedIn),
-                                    NavDestination(BridgeScreen.SETTINGS, "Settings", Icons.Default.Settings)
-                                )
-                            } else {
-                                navItems
-                            }
-                            bottomItems.forEach { dest ->
+                            mobileBottomItems.forEach { dest ->
+                                val isSelected = currentScreen == dest.screen ||
+                                    (dest.screen == BridgeScreen.MORE && currentScreen in adminSecondaryScreens)
                                 NavigationBarItem(
-                                    selected = currentScreen == dest.screen,
+                                    selected = isSelected,
                                     onClick = { viewModel.navigateTo(dest.screen) },
                                     icon = {
                                         if (dest.screen == BridgeScreen.INCOMING && pendingReviewBadgeCount > 0) {
@@ -302,7 +357,7 @@ fun AuthenticatedPharmacyApp(
                 ) {
                     if (useNavigationRail) {
                         NavigationRail(modifier = Modifier.fillMaxHeight()) {
-                            navItems.forEach { dest ->
+                            railItems.forEach { dest ->
                                 NavigationRailItem(
                                     selected = currentScreen == dest.screen,
                                     onClick = { viewModel.navigateTo(dest.screen) },
@@ -400,6 +455,14 @@ fun AuthenticatedPharmacyApp(
                                                 }
                                             },
                                             onOpenSettings = { viewModel.navigateTo(BridgeScreen.SETTINGS) }
+                                        )
+                                    }
+                                    BridgeScreen.MORE -> {
+                                        MoreScreen(
+                                            approvedCount = approvedReadyCount,
+                                            catalogCount = catalog.size,
+                                            historyCount = prescriptions.size,
+                                            onNavigate = { viewModel.navigateTo(it) }
                                         )
                                     }
                                     BridgeScreen.CATALOGUE -> {

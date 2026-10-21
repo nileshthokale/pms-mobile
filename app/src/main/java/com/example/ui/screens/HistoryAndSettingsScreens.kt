@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,12 +17,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -40,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,10 +57,132 @@ import com.example.model.PrescriptionRequest
 import com.example.model.StaffAccount
 import com.example.model.UserProfile
 import com.example.model.UserRole
-import com.example.ui.components.DesktopBridgeStatusBanner
+import com.example.ui.BridgeScreen
 import com.example.ui.components.StatusBadge
 import com.example.ui.components.formatTimestamp
 import com.example.ui.theme.JetBrainsMonoFamily
+
+@Composable
+fun MoreScreen(
+    approvedCount: Int,
+    catalogCount: Int,
+    historyCount: Int,
+    onNavigate: (BridgeScreen) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "More Tools & Records",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            text = "Open approved prescriptions for Counter Sale, manage the medicine catalogue, or adjust pharmacy settings.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        MoreDestinationCard(
+            title = "Ready for Counter Sale",
+            subtitle = "View approved prescriptions ($approvedCount ready) and export JSON for the desktop Counter Sale screen.",
+            icon = Icons.Default.AssignmentTurnedIn,
+            tag = "more_option_approved",
+            onClick = { onNavigate(BridgeScreen.APPROVED) }
+        )
+
+        MoreDestinationCard(
+            title = "Items / Item Master",
+            subtitle = "Search and manage the medicine catalogue ($catalogCount items imported from CSV).",
+            icon = Icons.Default.Inventory2,
+            tag = "more_option_catalogue",
+            onClick = { onNavigate(BridgeScreen.CATALOGUE) }
+        )
+
+        MoreDestinationCard(
+            title = "History",
+            subtitle = "View previous prescriptions and audit activity ($historyCount total requests).",
+            icon = Icons.Default.History,
+            tag = "more_option_history",
+            onClick = { onNavigate(BridgeScreen.HISTORY) }
+        )
+
+        MoreDestinationCard(
+            title = "Settings",
+            subtitle = "Manage AI configuration, pharmacy details, staff/terminals, retention and desktop integration.",
+            icon = Icons.Default.Settings,
+            tag = "more_option_settings",
+            onClick = { onNavigate(BridgeScreen.SETTINGS) }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun MoreDestinationCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    tag: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .testTag(tag),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Open $title",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
 @Composable
 fun HistoryScreen(
@@ -230,8 +358,6 @@ fun SettingsScreen(
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        DesktopBridgeStatusBanner()
-
         // 1. Pharmacy Workspace & Role Configuration
         Card(
             modifier = Modifier.fillMaxWidth(),
