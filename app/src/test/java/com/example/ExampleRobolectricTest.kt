@@ -1,9 +1,12 @@
 package com.example
 
 import android.content.Context
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -50,19 +53,30 @@ class ExampleRobolectricTest {
             .performScrollToNode(hasTestTag("how_the_app_works_card"))
         composeRule.onNodeWithTag("how_the_app_works_card").assertIsDisplayed()
 
-        // Open More and verify all 4 secondary destinations are accessible
+        // Open Ready for Counter from Home KPI card and verify back button says "Back to Home"
+        composeRule.onNodeWithTag("dashboard_list")
+            .performScrollToNode(hasText("Ready for Counter"))
+        composeRule.onNodeWithText("Ready for Counter").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Back to Home").assertIsDisplayed()
+        composeRule.onNodeWithTag("top_bar_back_button").performClick()
+        composeRule.waitForIdle()
+
+        // Open More and verify all 4 secondary destinations and awaiting vs imported/completed counts
         composeRule.onNodeWithTag("nav_more").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("more_option_approved").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("awaiting Counter Sale", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("imported/completed", substring = true).assertIsDisplayed()
         composeRule.onNodeWithTag("more_option_catalogue").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag("more_option_history").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag("more_option_settings").performScrollTo().assertIsDisplayed()
 
-        // Open Ready for Counter Sale from More and navigate back to More
+        // Open Ready for Counter Sale from More and verify back button says "Back to More"
         composeRule.onNodeWithTag("more_option_approved").performScrollTo().performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("top_bar_back_button").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Back to More").assertIsDisplayed()
 
         composeRule.onNodeWithTag("top_bar_back_button").performClick()
         composeRule.waitForIdle()

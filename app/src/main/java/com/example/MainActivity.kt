@@ -138,6 +138,7 @@ fun AuthenticatedPharmacyApp(
     val isDark = darkOverride ?: systemDark
 
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
+    val previousScreen by viewModel.previousScreen.collectAsStateWithLifecycle()
     val selectedRxId by viewModel.selectedPrescriptionId.collectAsStateWithLifecycle()
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val prescriptionsState by viewModel.prescriptionsState.collectAsStateWithLifecycle()
@@ -226,9 +227,12 @@ fun AuthenticatedPharmacyApp(
     }
 
     val approvedReadyCount = remember(prescriptions) {
+        prescriptions.count { it.statusEnum() == PrescriptionStatus.APPROVED }
+    }
+
+    val importedCompletedCount = remember(prescriptions) {
         prescriptions.count {
             it.statusEnum() in setOf(
-                PrescriptionStatus.APPROVED,
                 PrescriptionStatus.IMPORTED,
                 PrescriptionStatus.COMPLETED
             )
@@ -259,7 +263,11 @@ fun AuthenticatedPharmacyApp(
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Back to More"
+                                        contentDescription = if (previousScreen == BridgeScreen.MORE) {
+                                            "Back to More"
+                                        } else {
+                                            "Back to Home"
+                                        }
                                     )
                                 }
                             }
@@ -460,6 +468,7 @@ fun AuthenticatedPharmacyApp(
                                     BridgeScreen.MORE -> {
                                         MoreScreen(
                                             approvedCount = approvedReadyCount,
+                                            importedCompletedCount = importedCompletedCount,
                                             catalogCount = catalog.size,
                                             historyCount = prescriptions.size,
                                             onNavigate = { viewModel.navigateTo(it) }

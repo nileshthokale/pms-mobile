@@ -125,6 +125,7 @@ class PharmacyViewModel(
     val currentScreen: StateFlow<BridgeScreen> = _currentScreen.asStateFlow()
 
     private val _previousScreen = MutableStateFlow<BridgeScreen?>(null)
+    val previousScreen: StateFlow<BridgeScreen?> = _previousScreen.asStateFlow()
 
     private val _selectedPrescriptionId = MutableStateFlow<String?>(null)
     val selectedPrescriptionId: StateFlow<String?> = _selectedPrescriptionId.asStateFlow()

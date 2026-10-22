@@ -65,6 +65,7 @@ import com.example.ui.theme.JetBrainsMonoFamily
 @Composable
 fun MoreScreen(
     approvedCount: Int,
+    importedCompletedCount: Int = 0,
     catalogCount: Int,
     historyCount: Int,
     onNavigate: (BridgeScreen) -> Unit
@@ -88,7 +89,7 @@ fun MoreScreen(
 
         MoreDestinationCard(
             title = "Ready for Counter Sale",
-            subtitle = "View approved prescriptions ($approvedCount ready) and export JSON for the desktop Counter Sale screen.",
+            subtitle = "View approved prescriptions ($approvedCount awaiting Counter Sale, $importedCompletedCount imported/completed) and export JSON for the desktop Counter Sale screen.",
             icon = Icons.Default.AssignmentTurnedIn,
             tag = "more_option_approved",
             onClick = { onNavigate(BridgeScreen.APPROVED) }
